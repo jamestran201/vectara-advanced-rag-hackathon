@@ -31,7 +31,7 @@ def query_model(prompt):
             {
                 "query": prompt,
                 "start": 0,
-                "numResults": 5,
+                "numResults": 10,
                 "corpusKey": [
                     {
                         "customerId": VECTARA_CUSTOMER_ID,
@@ -45,7 +45,7 @@ def query_model(prompt):
                 "summary": [
                     {
                         "summarizerPromptName": "vectara-summary-ext-v1.2.0",
-                        "maxSummarizedResults": 5,
+                        "maxSummarizedResults": 10,
                         "responseLang": "en",
                         "factual_consistency_score": True
                     }
@@ -74,10 +74,10 @@ def query_model(prompt):
 st.title("Course lectures Q&A")
 st.caption("🚀 A streamlit chatbot powered by Vectara")
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "Ask me something about the lectures in this course."}]
+    st.session_state["messages"] = [{"role": "assistant", "content": "Ask me something about the lectures. For example: How does leader election work in Raft?"}]
 
 for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+    st.chat_message(msg["role"]).write(msg["content"], unsafe_allow_html=True)
 
 if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -107,7 +107,7 @@ if prompt := st.chat_input():
             references.append(" ".join(text))
 
         references_joined = "\n\n".join(references)
-        full_response = f"{summary}\n\nReferences:\n\n{references_joined}"
+        full_response = f"{summary}\n\nConfidence score: {factual_consistency_score}\n\nReferences:\n\n{references_joined}"
 
         st.session_state.messages.append({ "role": "assistant", "content": full_response })
         st.chat_message("assistant").write(full_response, unsafe_allow_html=True)
