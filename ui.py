@@ -71,10 +71,10 @@ def query_model(prompt):
     return parsed_response["responseSet"][0], False
 
 
-st.title("Course lectures Q&A")
+st.title("Distributed systems course lectures Q&A")
 st.caption("🚀 A streamlit chatbot powered by Vectara")
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "Ask me something about the lectures. For example: How does leader election work in Raft?"}]
+    st.session_state["messages"] = [{"role": "assistant", "content": "Ask me something about the lectures of the MIT distributed systems course. For example: How does leader election work in Raft?"}]
 
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"], unsafe_allow_html=True)
