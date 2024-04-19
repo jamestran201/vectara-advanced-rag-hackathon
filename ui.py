@@ -1,6 +1,7 @@
 import os
 import requests
 import streamlit as st
+import re
 
 VECTARA_CUSTOMER_ID = os.environ.get("VECTARA_CUSTOMER_ID")
 VECTARA_API_KEY = os.environ.get("VECTARA_API_KEY")
@@ -88,10 +89,13 @@ if prompt := st.chat_input():
         st.session_state.messages.append({"role": "assistant", "content": answer})
         st.chat_message("assistant").write(answer)
     else:
-        summary = answer["summary"][0]["text"] 
+        summary = answer["summary"][0]["text"]
+        references_used = sorted([int(match) for match in re.findall(r"\[(\d+)\]", summary)])
+
         factual_consistency_score = answer["summary"][0]["factualConsistency"]["score"]
 
         references = []
+        related_snippets = []
         for i, reference in enumerate(answer["response"]):
             start_time = 0
             for m in reference["metadata"]:
@@ -103,11 +107,21 @@ if prompt := st.chat_input():
             lecture_id = answer["document"][document_index]["id"]
             video_link = f"{videos_by_lectures[lecture_id]}&t={start_time}"
 
-            text = [f"{i+1}.", reference["text"], f"<a href=\"{video_link}\" target=\"_blank\">Lecture link.</a>"]
-            references.append(" ".join(text))
+            text = [f"[{i+1}]", reference["text"], f"<a href=\"{video_link}\" target=\"_blank\">Lecture link.</a>"]
+            content = " ".join(text)
 
-        references_joined = "\n\n".join(references)
-        full_response = f"{summary}\n\nConfidence score: {factual_consistency_score}\n\nReferences:\n\n{references_joined}"
+            if (i+1) in references_used:
+                references.append(content)
+            else:
+                related_snippets.append(content)
+
+        full_response = f"{summary}\n\nConfidence score: {factual_consistency_score}\n\n"
+        if len(references) > 0:
+            references_joined = "\n\n".join(references)
+            full_response += f"The above summary is based on these facts:\n\n{references_joined}\n\n"
+
+        related_snippets_joined = "\n\n".join(related_snippets)
+        full_response += f"Related snippets:\n\n{related_snippets_joined}"
 
         st.session_state.messages.append({ "role": "assistant", "content": full_response })
         st.chat_message("assistant").write(full_response, unsafe_allow_html=True)
